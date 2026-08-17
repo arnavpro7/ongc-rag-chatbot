@@ -83,29 +83,29 @@ docker exec -it ollama ollama pull llama3.2:3b
 http://localhost:3000
 
 ## Workflow
-
 PDF (Annual Report)
-│
-▼
+   |
+   v
 Document Upload (Open WebUI Knowledge Base)
-│
-▼
+   |
+   v
 Text Chunking
-│
-▼
+   |
+   v
 Embeddings
-│
-▼
+   |
+   v
 ChromaDB
-│
-▼
+   |
+   v
 Retriever
-│
-▼
+   |
+   v
 Llama 3.2 (Ollama)
-│
-▼
+   |
+   v
 Answer with Citation
+
 
 
 ## Example Questions
