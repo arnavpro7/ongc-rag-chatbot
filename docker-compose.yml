@@ -1,0 +1,85 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# Services:
+#   ollama       - runs the local LLM and exposes an HTTP API on port 11434
+#   open-webui   - the chat interface, talks to ollama over the internal
+#                  docker network at http://ollama:11434
+#   backend      - OPTIONAL educational FastAPI service, talks to ollama the
+#                  same way. Comment this whole service out if you only want
+#                  Ollama + Open WebUI.
+#
+# All three sit on the same docker network ("chatbot-net") so they can reach
+# each other by SERVICE NAME (e.g. "ollama"), not "localhost".
+# ---------------------------------------------------------------------------
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - chatbot-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    # Uncomment below if you have an NVIDIA GPU + nvidia-container-toolkit installed
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-change-me-to-a-long-random-string}
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - chatbot-net
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chatbot-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - MODEL_NAME=${MODEL_NAME:-llama3.2:3b}
+      - REQUEST_TIMEOUT_SECONDS=${REQUEST_TIMEOUT_SECONDS:-60}
+      - MAX_HISTORY_MESSAGES=${MAX_HISTORY_MESSAGES:-20}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - chatbot-net
+    restart: unless-stopped
+
+networks:
+  chatbot-net:
+    driver: bridge
+
+volumes:
+  ollama-data:
+  open-webui-data:
