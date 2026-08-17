@@ -125,6 +125,9 @@ Answer with Citation
 - GPU acceleration
 - Persistent backend conversation history
 
+
+## Screenshots ![Grounded answer with citation](screenshots/01-grounded-answer-citation.png) ![Multi-turn conversation](screenshots/02-multi-turn-conversation.png) ![Context blending example](screenshots/03-context-blending-example.png) ![Model overview](screenshots/04-model-overview.png)
+
 ## Author
 
 Arnav Choudhary
